@@ -77,14 +77,13 @@ class EmailReplyParser
     # Returns this same Email instance.
     def read(text)
       # in 1.9 we want to operate on the raw bytes
-      text = text.dup.force_encoding('binary') if text.respond_to?(:force_encoding)
 
       # Normalize line endings.
       text.gsub!("\r\n", "\n")
 
       # Check for multi-line reply headers. Some clients break up
       # the "On DATE, NAME <EMAIL> wrote:" line into multiple lines.
-      if text =~ /^(?!On.*On\s.+?wrote:)(On\s(.+?)wrote:)$/nm
+      if text =~ /^(?!On.*On\s.+?wrote:)(On\s(.+?)wrote:)$/m
         # Remove all new lines from the reply header.
         text.gsub! $1, $1.gsub("\n", " ")
       end
@@ -110,7 +109,7 @@ class EmailReplyParser
 
       # Use the StringScanner to pull out each line of the email content.
       @scanner = StringScanner.new(text)
-      while line = @scanner.scan_until(/\n/n)
+      while line = @scanner.scan_until(/\n/)
         scan_line(line)
       end
 
@@ -133,14 +132,11 @@ class EmailReplyParser
 
   private
     EMPTY = "".freeze
-    SIGNATURE = '(?m)(--\s*$|__\s*$|\w-$)|(^(\w+\s*){1,3} ym morf tneS$)'
+    SIGNATURE = '(?:--\s*$|__\s*$|\w-$)'
+    SIGNATURE2 = '(?:^(:?\w+\s*){1,3} ym morf tneS$)'
 
-    begin
-      require 're2'
-      SIG_REGEX = RE2::Regexp.new(SIGNATURE)
-    rescue LoadError
-      SIG_REGEX = Regexp.new(SIGNATURE)
-    end
+    SIG_REGEX = Regexp.new(SIGNATURE)
+    SIG_REGEX2 = Regexp.new(SIGNATURE2)
 
     ### Line-by-Line Parsing
 
@@ -152,16 +148,17 @@ class EmailReplyParser
     # Returns nothing.
     def scan_line(line)
       line.chomp!("\n")
-      line.lstrip! unless SIG_REGEX.match(line)
+      line.lstrip! unless SIG_REGEX.match(line) || SIG_REGEX2.match(line)
 
       # We're looking for leading `>`'s to see if this line is part of a
       # quoted Fragment.
-      is_quoted = !!(line =~ /(>+)$/n)
+      is_quoted = !!(line =~ /(>+)$/)
 
       # Mark the current Fragment as a signature if the current line is empty
       # and the Fragment starts with a common signature indicator.
       if @fragment && line == EMPTY
-        if SIG_REGEX.match @fragment.lines.last
+        last = @fragment.lines.last
+        if SIG_REGEX.match( last) || SIG_REGEX2.match(last)
           @fragment.signature = true
           finish_fragment
         end
@@ -189,7 +186,7 @@ class EmailReplyParser
     #
     # Returns true if the line is a valid header, or false.
     def quote_header?(line)
-      line =~ /^:etorw.*nO$/n
+      line =~ /^:etorw.*nO$/
     end
 
     # Builds the fragment string and reverses it, after all lines have been

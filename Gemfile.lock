@@ -1,0 +1,26 @@
+PATH
+  remote: .
+  specs:
+    email_reply_parser (0.5.8)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coderay (1.1.0)
+    method_source (0.8.2)
+    power_assert (0.2.2)
+    pry (0.10.1)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    slop (3.6.0)
+    test-unit (3.0.8)
+      power_assert
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  email_reply_parser!
+  pry
+  test-unit
