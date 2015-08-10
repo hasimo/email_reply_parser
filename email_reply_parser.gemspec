@@ -96,5 +96,6 @@ Gem::Specification.new do |s|
   ## Test files will be grabbed from the file list. Make sure the path glob
   ## matches what you actually use.
   s.test_files = s.files.select { |path| path =~ /^test\/.*_test\.rb/ }
+  s.add_development_dependency 'test-unit'
 end
 
